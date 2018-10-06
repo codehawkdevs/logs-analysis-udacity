@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import psycopg2
 
@@ -23,21 +25,26 @@ def get_popular_articles():
         SELECT articles.title, COUNT(*) AS num
         FROM articles
         JOIN log
-        ON log.path LIKE concat('/article/%', articles.slug)
+        ON log.path = concat('/article/', articles.slug)
         GROUP BY articles.title
         ORDER BY num DESC
         LIMIT 3;
     """
 
     # Execute the above query.
-    results = execute_query(query)
+    rows = execute_query(query)
 
     # Print results.
+    print("-" * 70)
     print("1. The 3 most popular articles of all time are:")
-    rank = 1
-    for row in results:
-        print(u"  {0}. \"{1}\" — {2:,} views.".format(rank, row[0], row[1]))
-        rank += 1
+    for (title, count) in rows:
+        '''
+        (title, count) unpacks each row into
+        a tuple and you can refer to them easily
+        in your loop block as shown in the next line.
+        '''
+        print("    {} - {} views".format(title, count))
+    print("-" * 70)
 
 
 def get_popular_authors():
@@ -49,42 +56,32 @@ def get_popular_authors():
         articles
         ON articles.author=authors.id
         JOIN
-        log on log.path LIKE concat('/article/%',articles.slug)
+        log on log.path = concat('/article/',articles.slug)
         GROUP BY authors.name
         ORDER BY num DESC;
     """
 
     # Run above query.
-    results = execute_query(query)
+    rows = execute_query(query)
 
     # Print results.
     print("2. The most popular article authors of all time are:")
-    rank = 1
-    for row in results:
-        print(u"  {0}. {1} — {2:,} views.".format(rank, row[0], row[1]))
-        rank += 1
+    for (title, count) in rows:
+        print("    {} - {} views".format(title, count))
+    print("-" * 70)
 
 
 def get_days_with_errors():
     """Return days in which more than 1% requests lead to errors."""
     query = """
-        SELECT total.time,
-        ROUND(((errors.err_req*100.0) / total.req), 3) AS percent
-        FROM (
-        SELECT time::timestamp::date, count(*) AS err_req
-        FROM log
-        WHERE status LIKE '404%'
-        GROUP BY time::timestamp::date
-        ) AS errors
-        JOIN (
-        SELECT time::timestamp::date, count(*) AS req
-        FROM log
-        GROUP BY time::timestamp::date
-        ) AS total
-        ON total.time::timestamp::date = errors.time::timestamp::date
-        WHERE (ROUND(((errors.err_req*100.0) / total.req), 3) > 1)
-        ORDER BY percent DESC;err_requests * 100.0)/total.requests), 5) > 1.0)
-        ORDER BY percent DESC;
+    select to_char(date, 'FMMonth FMDD, YYYY'), err/total as ratio
+    from (select time::date as date,
+    count(*) as total,
+    sum((status != '200 OK')::int)::float as err
+    from log
+    group by date) as errors
+    where err/total > 0.01
+
     """
 
     # Execute the above query.
@@ -93,9 +90,10 @@ def get_days_with_errors():
     # Print results.
     print("3. Days with more than 1% of request that lead to an error:")
     for row in results:
-        date = row[0].strftime('%B %d, %Y')     # Pretty-formatting date.
-        errors = str(round(row[1], 2)) + "%" + " errors"
+        date = row[0]  # Pretty-formatting date.
+        errors = str("%.2f" % float(row[1] * 100)) + "%" + " errors"
         print("   " + date + u" — " + errors)
+    print("-" * 70)
 
 
 # Print all the results.
