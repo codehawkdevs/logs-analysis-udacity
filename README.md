@@ -1,9 +1,11 @@
 # Logs Analysis Project
 This is a project for Udacity's [Full Stack Web Developer Nanodegree](https://www.udacity.com/course/full-stack-web-developer-nanodegree--nd004)
+
 ## Project Description:
-Your task is to create a reporting tool that prints out reports (in plain text) 
-based on the data in the database. This reporting tool is a Python3 program 
-using the psycopg2 module to connect to the database.
+* Create a reporting tool that prints out reports (in plain text) based on the data in the database.
+* This reporting tool is a Python3 program using the psycopg2 module to connect to the database.
+* PostgreSQL is used in this project.
+
 ### Questions to Answer:
 1. **What are the most popular three articles of all time?** Which articles have been 
 accessed the most? Present this information as a sorted list with the most popular 
